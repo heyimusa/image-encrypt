@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Encryption/Decryption</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .section {
+            flex: 1;
+            margin: 10px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input, select {
+            margin: 10px 0;
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .password-field {
+            display: block;
+        }
+        .rsa-fields {
+            display: none;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Encryption/Decryption</h1>
+    
+    <div class="container">
+        <div class="section">
+            <h2>Encrypt Image</h2>
+            <form id="encrypt-form" action="/encrypt" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept="image/*" required>
+                
+                <select name="method" onchange="updateEncryptFields(this.value)">
+                    <option value="sha256">SHA-256</option>
+                    <option value="aes">AES</option>
+                    <option value="rsa">RSA</option>
+                </select>
+                
+                <div class="password-field">
+                    <input type="password" name="password" placeholder="Enter password" required>
+                </div>
+                
+                <div class="rsa-fields">
+                    <button type="button" onclick="generateRSAKeys()">Generate New RSA Keys</button>
+                    <textarea name="public_key" placeholder="Public Key (PEM format)" readonly></textarea>
+                    <input type="hidden" name="key_id">
+                </div>
+                
+                <input type="submit" value="Encrypt">
+            </form>
+        </div>
+        
+        <div class="section">
+            <h2>Decrypt Image</h2>
+            <form id="decrypt-form" action="/decrypt" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                
+                <select name="method" onchange="updateDecryptFields(this.value)">
+                    <option value="sha256">SHA-256</option>
+                    <option value="aes">AES</option>
+                    <option value="rsa">RSA</option>
+                </select>
+                
+                <div class="password-field">
+                    <input type="password" name="password" placeholder="Enter password" required>
+                </div>
+                
+                <div class="rsa-fields">
+                    <input type="text" name="key_id" placeholder="Enter Key ID">
+                </div>
+                
+                <input type="submit" value="Decrypt">
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function updateEncryptFields(method) {
+            const passwordField = document.querySelector('#encrypt-form .password-field');
+            const rsaFields = document.querySelector('#encrypt-form .rsa-fields');
+            
+            if (method === 'rsa') {
+                passwordField.style.display = 'none';
+                rsaFields.style.display = 'block';
+                passwordField.querySelector('input').required = false;
+            } else {
+                passwordField.style.display = 'block';
+                rsaFields.style.display = 'none';
+                passwordField.querySelector('input').required = true;
+            }
+        }
+
+        function updateDecryptFields(method) {
+            const passwordField = document.querySelector('#decrypt-form .password-field');
+            const rsaFields = document.querySelector('#decrypt-form .rsa-fields');
+            
+            if (method === 'rsa') {
+                passwordField.style.display = 'none';
+                rsaFields.style.display = 'block';
+                passwordField.querySelector('input').required = false;
+            } else {
+                passwordField.style.display = 'block';
+                rsaFields.style.display = 'none';
+                passwordField.querySelector('input').required = true;
+            }
+        }
+
+        async function generateRSAKeys() {
+            try {
+                const response = await fetch('/generate-rsa-keys', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                document.querySelector('#encrypt-form [name="public_key"]').value = data.public_key;
+                document.querySelector('#encrypt-form [name="key_id"]').value = data.key_id;
+                
+                alert('RSA keys generated successfully! Key ID: ' + data.key_id);
+            } catch (error) {
+                alert('Error generating RSA keys: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
