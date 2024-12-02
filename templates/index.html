@@ -2,100 +2,277 @@
 <html>
 <head>
     <title>Image Encryption/Decryption</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            line-height: 1.6;
         }
+
+        .header {
+            background: #ffffff;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
             display: flex;
-            justify-content: space-between;
+            gap: 2rem;
+            flex-wrap: wrap;
         }
+
         .section {
             flex: 1;
-            margin: 10px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            min-width: 300px;
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
         }
-        input, select {
-            margin: 10px 0;
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
+
+        .section:hover {
+            transform: translateY(-5px);
         }
-        .password-field {
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
             display: block;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+            font-weight: 500;
         }
+
+        select, input[type="file"], input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: #f8fafc;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
         .rsa-fields {
             display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 8px;
         }
+
         textarea {
             width: 100%;
             height: 100px;
-            margin: 10px 0;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 0.875rem;
+            resize: vertical;
+            background: #fff;
         }
-        button {
-            padding: 10px;
-            margin: 5px 0;
-            width: 100%;
+
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .file-input-wrapper::after {
+            content: 'Choose File';
+            position: absolute;
+            right: 0;
+            top: 0;
+            padding: 0.75rem;
+            background: #4299e1;
+            color: white;
+            border-radius: 0 8px 8px 0;
+            pointer-events: none;
+        }
+
+        /* Animation for sections */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .section {
+                min-width: 100%;
+            }
+        }
+
+        /* Status message styling */
+        .status-message {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .status-success {
+            background: #c6f6d5;
+            color: #2f855a;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #c53030;
         }
     </style>
 </head>
 <body>
-    <h1>Image Encryption/Decryption</h1>
+    <div class="header">
+        <h1>Image Encryption/Decryption</h1>
+    </div>
     
     <div class="container">
         <div class="section">
             <h2>Encrypt Image</h2>
             <form id="encrypt-form" action="/encrypt" method="post" enctype="multipart/form-data">
-                <input type="file" name="file" accept="image/*" required>
+                <div class="form-group">
+                    <label for="encrypt-method">Encryption Method</label>
+                    <select id="encrypt-method" name="method" onchange="updateEncryptFields(this.value)">
+                        <option value="sha256">SHA-256</option>
+                        <option value="aes">AES</option>
+                        <option value="rsa">RSA</option>
+                    </select>
+                </div>
+
+                <div class="form-group file-input-wrapper">
+                    <label for="encrypt-file">Select Image</label>
+                    <input id="encrypt-file" type="file" name="file" accept="image/*" required>
+                </div>
                 
-                <select name="method" onchange="updateEncryptFields(this.value)">
-                    <option value="sha256">SHA-256</option>
-                    <option value="aes">AES</option>
-                    <option value="rsa">RSA</option>
-                </select>
-                
-                <div class="password-field">
-                    <input type="password" name="password" placeholder="Enter password" required>
+                <div class="form-group password-field">
+                    <label for="encrypt-password">Password</label>
+                    <input id="encrypt-password" type="password" name="password" placeholder="Enter encryption password" required>
                 </div>
                 
                 <div class="rsa-fields">
-                    <button type="button" onclick="generateRSAKeys()">Generate New RSA Keys</button>
-                    <textarea name="public_key" placeholder="Public Key (PEM format)" readonly></textarea>
-                    <input type="hidden" name="key_id">
+                    <button type="button" class="btn btn-secondary" onclick="generateRSAKeys()">Generate New RSA Keys</button>
+                    <div class="form-group">
+                        <label for="public-key">Public Key</label>
+                        <textarea id="public-key" name="public_key" placeholder="Public Key (PEM format)" readonly></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="key-id">Key ID</label>
+                        <input type="text" id="key-id" name="key_id" readonly>
+                    </div>
                 </div>
                 
-                <input type="submit" value="Encrypt">
+                <button type="submit" class="btn btn-primary">Encrypt</button>
             </form>
+            <div class="status-message" id="encrypt-status"></div>
         </div>
         
         <div class="section">
             <h2>Decrypt Image</h2>
             <form id="decrypt-form" action="/decrypt" method="post" enctype="multipart/form-data">
-                <input type="file" name="file" required>
+                <div class="form-group">
+                    <label for="decrypt-method">Decryption Method</label>
+                    <select id="decrypt-method" name="method" onchange="updateDecryptFields(this.value)">
+                        <option value="sha256">SHA-256</option>
+                        <option value="aes">AES</option>
+                        <option value="rsa">RSA</option>
+                    </select>
+                </div>
+
+                <div class="form-group file-input-wrapper">
+                    <label for="decrypt-file">Select Encrypted File</label>
+                    <input id="decrypt-file" type="file" name="file" required>
+                </div>
                 
-                <select name="method" onchange="updateDecryptFields(this.value)">
-                    <option value="sha256">SHA-256</option>
-                    <option value="aes">AES</option>
-                    <option value="rsa">RSA</option>
-                </select>
-                
-                <div class="password-field">
-                    <input type="password" name="password" placeholder="Enter password" required>
+                <div class="form-group password-field">
+                    <label for="decrypt-password">Password</label>
+                    <input id="decrypt-password" type="password" name="password" placeholder="Enter decryption password" required>
                 </div>
                 
                 <div class="rsa-fields">
-                    <input type="text" name="key_id" placeholder="Enter Key ID">
+                    <div class="form-group">
+                        <label for="decrypt-key-id">Key ID</label>
+                        <input type="text" id="decrypt-key-id" name="key_id" placeholder="Enter Key ID">
+                    </div>
                 </div>
                 
-                <input type="submit" value="Decrypt">
+                <button type="submit" class="btn btn-primary">Decrypt</button>
             </form>
+            <div class="status-message" id="decrypt-status"></div>
         </div>
     </div>
 
@@ -137,14 +314,61 @@
                 });
                 const data = await response.json();
                 
-                document.querySelector('#encrypt-form [name="public_key"]').value = data.public_key;
-                document.querySelector('#encrypt-form [name="key_id"]').value = data.key_id;
+                document.querySelector('#public-key').value = data.public_key;
+                document.querySelector('#key-id').value = data.key_id;
                 
-                alert('RSA keys generated successfully! Key ID: ' + data.key_id);
+                showStatus('encrypt-status', 'RSA keys generated successfully! Save the Key ID for decryption.', true);
             } catch (error) {
-                alert('Error generating RSA keys: ' + error.message);
+                showStatus('encrypt-status', 'Error generating RSA keys: ' + error.message, false);
             }
         }
+
+        function showStatus(elementId, message, isSuccess) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.textContent = message;
+            statusElement.className = 'status-message ' + (isSuccess ? 'status-success' : 'status-error');
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle form submissions
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const statusId = form.id === 'encrypt-form' ? 'encrypt-status' : 'decrypt-status';
+                
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(errorText);
+                    }
+                    
+                    // Handle the file download
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = response.headers.get('content-disposition')?.split('filename=')[1] || 'downloaded-file';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showStatus(statusId, 'Operation completed successfully!', true);
+                } catch (error) {
+                    showStatus(statusId, error.message, false);
+                }
+            });
+        });
     </script>
 </body>
 </html>
